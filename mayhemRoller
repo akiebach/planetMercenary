@@ -1,0 +1,57 @@
+/*
+Expects to be passed a Roll() object
+Compares first die in the provided roll against all remaining dice, returning true if its value is higher than all other dice
+*/
+function checkForMayhem(dieRoll){
+    let mayhemLength = dieRoll.dice[0].results.length;
+    if (mayhemLength < 2) {
+        return false;
+    }
+    for (let mayhemCounter = 1; mayhemCounter < mayhemLength; mayhemCounter++){
+        if (dieRoll.dice[0].results[0].result <= dieRoll.dice[0].results[mayhemCounter].result) {
+            return false;
+        } else if (mayhemCounter + 1 == mayhemLength){
+            return true;
+        }
+    }
+}
+/*
+Expects to be passed an html input type, and text description to be used in the prompt
+Creates a generic input dialog
+*/
+async function input(type, prompt)
+{
+  let value = await new Promise((resolve)=>{
+    new Dialog({
+      title : `Input Dialog`, 
+      content : `<table style="width:100%"><tr><th style="width:50%"><label>${prompt}</label></th><td style="width:50%"><input type="${type}" name="input"/></td></tr></table>`,
+      buttons : {
+        Ok : { label : `Ok`, callback : (html) => { resolve(html.find("input").val()); }}
+      }
+    }).render(true);
+  });
+  return value;
+}
+/*
+Calls the dialog function to request any modifiers
+Creates a 3d6 plus modifier Roll()
+Changes flavor if the first die is higher than the rest of the dice
+Sends the roll .toMessage using flavor
+*/
+(async ()=> {
+    let modifier = await input(`number`, `Enter Skill Modifier : `);
+    let mayhem = new Roll(`3d6 + ${modifier}`).roll();
+    let resultFlavor = `
+        <div>
+            <h2>Skill Results</h2>
+        </div>
+    `
+    if (checkForMayhem(mayhem)) {
+        resultFlavor += `
+            <div>
+                <h2><i class="fas fa-radiation"></i>Possible Mayhem<i class="fas fa-radiation"></i></h2>
+            </div>
+        `
+    }
+    mayhem.toMessage({flavor: resultFlavor});
+})();
